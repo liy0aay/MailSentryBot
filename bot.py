@@ -143,49 +143,6 @@ def analyze_text(text: str) -> Dict:
     except Exception as e:
         return {'error': str(e)}
 
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    """Основной обработчик сообщений"""
-    try:
-        text = message.text
-        report = []
-        print(f"Processing message: {text}")  # Логирование входящего сообщения
-        
-        # Проверка ссылок
-        urls = re.findall(r'https?://\S+', text)
-        for url in urls:
-            print(f"Checking URL: {url}")  # Логирование URL
-            vt_result = check_url_virustotal(url)
-            print(f"VT Result: {vt_result}")  # Логирование результата
-            
-            if vt_result.get('malicious', 0) > 1:  # Более низкий порог
-                report.append(
-                    f"🔴 Опасная ссылка: {url}\n"
-                    f"• Вредоносных детектов: {vt_result['malicious']}\n"
-                    f"• Подозрительных: {vt_result['suspicious']}"
-                )
-
-        # Проверка текста всегда
-        text_result = analyze_text(text)
-        print(f"Text Analysis: {text_result}")  # Логирование анализа
-        
-        if text_result.get('label') == 'phishing' and text_result.get('score', 0) > 0.5:
-            report.append(
-                f"🟡 Подозрительный текст\n"
-                f"• Уверенность: {text_result['score']:.0%}\n"
-                f"• Ключевые слова: {', '.join(text_result.get('keywords', []))}"
-            )
-        
-        # Формирование отчета
-        if report:
-            bot.reply_to(message, "\n\n".join(report))
-        else:
-            bot.reply_to(message, "✅ Сообщение безопасно")
-    
-    except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка обработки: {str(e)}")
-
-
 
 # Обработчики команд
 @bot.message_handler(commands=['start', 'help'])
@@ -290,42 +247,52 @@ def handle_message(message):
     try:
         text = message.text
         report = []
-        
-        # Проверка ссылок (включая сокращенные)
-        urls = re.findall(r'https?://\S+', text)
-        for url in urls:
-            # Раскрытие сокращенных URL
-            try:
-                expanded_url = requests.head(url, allow_redirects=True, timeout=5).url
-                if expanded_url != url:
-                    report.append(f"ℹ️ Сокращенная ссылка: {url} -> {expanded_url}")
-                    url = expanded_url
-            except:
-                pass
+        print(f"Processing message: {text}")
 
+        # 1. Проверка и раскрытие ссылок
+        urls = re.findall(r'https?://\S+', text)
+        expanded_urls = []
+        for url in urls:
+            try:
+                # Раскрытие сокращенных URL
+                expanded = requests.head(url, allow_redirects=True, timeout=5).url
+                if expanded != url:
+                    report.append(f"🔍 Сокращенная ссылка: {url} -> {expanded}")
+                expanded_urls.append(expanded)
+            except Exception as e:
+                print(f"Ошибка раскрытия URL: {str(e)}")
+                expanded_urls.append(url)
+
+        # 2. Проверка через VirusTotal
+        for url in expanded_urls:
             vt_result = check_url_virustotal(url)
-            if vt_result.get('malicious', 0) > 1:
+            print(f"VirusTotal Result: {vt_result}")
+            
+            if 'malicious' in vt_result and vt_result['malicious'] > 0:
                 report.append(
-                    f"🔴 Опасная ссылка: {url}\n"
-                    f"• Вредоносных детектов: {vt_result['malicious']}\n"
-                    f"• Подозрительных: {vt_result['suspicious']}"
+                    f"\n🔴 Опасная ссылка: {url}\n"
+                    f"┣ Безопасно: {vt_result['harmless']}\n"
+                    f"┣ Подозрительно: {vt_result['suspicious']}\n"
+                    f"┗ Опасность: {vt_result['malicious']}"
                 )
 
-        # Анализ текста
+        # 3. Анализ текста через NLP
         text_result = analyze_text(text)
         if text_result.get('label') == 'phishing' and text_result.get('score', 0) > 0.4:
             report.append(
-                f"🟡 Подозрительный текст\n"
-                f"• Уверенность: {text_result['score']:.0%}\n"
+                f"\n🟡 Подозрительный текст\n"
+                f"┣ Уверенность: {text_result['score']:.0%}\n"
+                # f"┗ Ключевые слова: {', '.join(text_result.get('keywords', []))}"
             )
 
+        # 4. Формирование отчета
         if report:
-            bot.reply_to(message, "\n\n".join(report))
+            bot.reply_to(message, "\n".join(report))
         else:
             bot.reply_to(message, "✅ Сообщение безопасно")
-    
+
     except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка обработки: {str(e)}")
+        bot.reply_to(message, f"❌ Ошибка: {str(e)}")
 
 if __name__ == "__main__":
     print("Бот запущен...")
