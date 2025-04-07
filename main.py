@@ -273,10 +273,10 @@ def handle_answer(call):
     
     if a_idx == question["correct"] and user_progress[user_id]["correct"] == 0:
         user_progress[user_id]["correct"] += 1
-        result = "✅ Правильно! Один верный ответ есть, постарайся ответить верно на оставшиеся вопросы\n"
+        result = "✅ Правильно! Один верный ответ есть, постарайся ответить верно на оставшиеся вопросы!\n"
     elif a_idx == question["correct"] and user_progress[user_id]["correct"] > 0:
         user_progress[user_id]["correct"] += 1
-        result = f"✅ Правильно! На счету верных ответов уже {user_progress[user_id]["correct"]}\n"
+        result = f"✅ Правильно! На счету верных ответов уже {user_progress[user_id]["correct"]}!\n"
     else:
         result = "❌ Неверно, но не стоит расстраиваться!\n"
     
