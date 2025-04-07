@@ -2,9 +2,9 @@ import telebot
 import requests
 import re
 import base64
-from telebot import types
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 from typing import Dict, List
+from telebot import types
 from dotenv import load_dotenv
 import os
 
@@ -32,7 +32,7 @@ except Exception as e:
     print(f"Ошибка загрузки модели: {e}")
     nlp = None
 
-# Конфигурация безопасности
+# Тестирование
 SAFETY_QUESTIONS = [
     {
         "question": "Что делать при получении письма с просьбой обновить пароль?",
@@ -114,14 +114,10 @@ def analyze_text(text: str) -> Dict:
         result = nlp(text[:512])[0]
         print(f"NLP Result: {result}")
 
-        # Расширенный многоязычный словарь ключевых слов
         phishing_keywords = {
-            # Русские ключевые слова
             'розыгрыш', 'приз', 'победитель', 'подарок', 'коробка', 'бесплатно',
             'банк', 'карта', 'пароль', 'срочно', 'уведомление', 'дозвониться',
             'маркетплейс', 'акция', 'выигрыш', 'подтвердить', 'безопасность',
-        
-            # Общие международные
             'winner', 'prize', 'urgent', 'security', 'verify', 'account'
         }
         
@@ -153,14 +149,14 @@ def send_welcome(message):
 - Даю рекомендации по безопасности
 
 Команды:
-/safety_test - Тест знаний безопасности
+/safety_test - Тест на основы безопасности
 /check [текст] - Проверить сообщение
 """
     bot.reply_to(message, help_text)
 
 @bot.message_handler(commands=['safety_test'])
 def start_safety_test(message):
-    """Начало теста безопасности"""
+    """Начало теста"""
     user_id = message.from_user.id
     user_progress[user_id] = {"current_question": 0, "correct": 0}
     ask_question(message.chat.id, user_id)
@@ -248,7 +244,7 @@ def handle_message(message):
         print(f"Processing message: {text}")
 
         # 1. Проверка и раскрытие ссылок
-        urls = re.findall(r'https?://\S+', text)
+        urls = re.findall(r'http*://*', text)
         expanded_urls = []
         for url in urls:
             try:
@@ -286,8 +282,10 @@ def handle_message(message):
         # 4. Формирование отчета
         if report:
             bot.reply_to(message, "\n".join(report))
+            print(expanded_urls)
         else:
             bot.reply_to(message, "✅ Сообщение безопасно")
+            print(expanded_urls)
 
     except Exception as e:
         bot.reply_to(message, f"❌ Ошибка: {str(e)}")
@@ -295,3 +293,4 @@ def handle_message(message):
 if __name__ == "__main__":
     print("Бот запущен...")
     bot.polling(none_stop=True)
+    
