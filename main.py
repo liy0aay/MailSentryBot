@@ -271,11 +271,14 @@ def handle_answer(call):
     
     question = SAFETY_QUESTIONS[q_idx]
     
-    if a_idx == question["correct"]:
+    if a_idx == question["correct"] and user_progress[user_id]["correct"] == 0:
         user_progress[user_id]["correct"] += 1
-        result = "✅ Правильно!\n"
+        result = "✅ Правильно! Один верный ответ есть, постарайся ответить верно на оставшиеся вопросы\n"
+    elif a_idx == question["correct"] and user_progress[user_id]["correct"] > 0:
+        user_progress[user_id]["correct"] += 1
+        result = f"✅ Правильно! На счету верных ответов уже{user_progress[user_id]["correct"]}\n"
     else:
-        result = "❌ Неверно!\n"
+        result = "❌ Неверно, но не стоит расстраиваться!\n"
     
     bot.edit_message_text(
         chat_id=call.message.chat.id,
