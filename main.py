@@ -18,6 +18,15 @@ if not API_TOKEN or not VIRUSTOTAL_API_KEY:
 
 bot = telebot.TeleBot(API_TOKEN)
 
+# Инициализация Кнопок
+def create_main_keyboard():
+    """Создает главную клавиатуру с кнопками."""
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+    btn_check = types.KeyboardButton("🔍 Проверить сообщение/ссылку")
+    btn_test = types.KeyboardButton("🎓 Пройти тест безопасности")
+    markup.add(btn_check, btn_test)
+    return markup
+
 # Инициализация NLP-модели
 try:
     model_name = "mrm8488/bert-tiny-finetuned-sms-spam-detection"
@@ -137,22 +146,23 @@ SAFETY_QUESTIONS = [
 
 user_progress = {}
 
+
 # Вспомогательные функции
 def encode_url(url: str) -> str:
     """Кодирование URL для VirusTotal"""
     return base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
 
+
 def check_url_virustotal(url: str) -> Dict:
     """Проверка URL через VirusTotal API с улучшенной обработкой ошибок"""
     headers = {'x-apikey': VIRUSTOTAL_API_KEY}
-    
+
     try:
-        # Кодирование URL с обработкой спецсимволов
         encoded_url = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
         report_url = f'https://www.virustotal.com/api/v3/urls/{encoded_url}'
-        
+
         response = requests.get(report_url, headers=headers, timeout=10)
-        print(f"VirusTotal API Response: {response.status_code}")  # Логирование
+        print(f"VirusTotal API Response: {response.status_code}")
 
         if response.status_code == 200:
             data = response.json()
@@ -163,13 +173,12 @@ def check_url_virustotal(url: str) -> Dict:
                 'harmless': stats.get('harmless', 0)
             }
 
-        # Если отчет не найден, отправляем URL на сканирование
         elif response.status_code == 404:
             scan_url = 'https://www.virustotal.com/api/v3/urls'
             response = requests.post(
-                scan_url, 
-                headers=headers, 
-                data={'url': url}, 
+                scan_url,
+                headers=headers,
+                data={'url': url},
                 timeout=15
             )
             if response.status_code == 200:
@@ -180,7 +189,7 @@ def check_url_virustotal(url: str) -> Dict:
         return {'error': f"Ошибка API: {response.status_code}"}
 
     except Exception as e:
-        print(f"VirusTotal Error: {str(e)}")  # Логирование ошибок
+        print(f"VirusTotal Error: {str(e)}")
         return {'error': f"Ошибка подключения: {str(e)}"}
 
 
@@ -189,8 +198,11 @@ def analyze_text(text: str) -> Dict:
     try:
         if not nlp:
             return {'error': 'Модель не загружена'}
-            
-        result = nlp(text[:512])[0]
+
+        tokenized_input = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+        truncated_text = tokenizer.decode(tokenized_input["input_ids"][0], skip_special_tokens=True)
+
+        result = nlp(truncated_text)[0]
         print(f"NLP Result: {result}")
 
         phishing_keywords = {
@@ -199,12 +211,11 @@ def analyze_text(text: str) -> Dict:
             'маркетплейс', 'акция', 'выигрыш', 'подтвердить', 'безопасность',
             'winner', 'prize', 'urgent', 'security', 'verify', 'account'
         }
-        
-        # Поиск ключевых слов с учетом морфологии
+
         text_lower = text.lower()
         found_keywords = {
             keyword for keyword in phishing_keywords
-            if re.search(rf'\b{re.escape(keyword)}\b', text_lower)
+            if re.search(rf'\b{re.escape(keyword)}\w*\b', text_lower)
         }
 
         return {
@@ -212,170 +223,325 @@ def analyze_text(text: str) -> Dict:
             'score': result['score'],
             'keywords': list(found_keywords)
         }
-    
+
     except Exception as e:
+        print(f"NLP Analysis Error: {e}")
         return {'error': str(e)}
 
+def perform_analysis(message):
+    """Выполняет анализ текста и URL из сообщения."""
+    try:
+        text = message.text
+        report = []
+        print(f"Processing message for analysis: {text}")
+
+        urls = re.findall(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+', text)
+        expanded_urls = []
+        if urls:
+            report.append("🔎 **Анализ ссылок:**")
+            for url in urls:
+                if not url.startswith(('http://', 'https://', 'ftp://')):
+                    url = 'http://' + url
+                try:
+                    response = requests.head(url, allow_redirects=True, timeout=7)
+                    expanded = response.url
+                    if expanded != url and len(expanded) > len(url) + 5:
+                        report.append(f"🔗 Сокращенная ссылка: `{url}` -> `{expanded}`")
+                    expanded_urls.append(expanded)
+                except requests.exceptions.RequestException as e:
+                    print(f"Ошибка раскрытия URL {url}: {str(e)}")
+                    report.append(f"⚠️ Не удалось проверить ссылку: `{url}` (Ошибка: {type(e).__name__})")
+                    if url not in expanded_urls:
+                         expanded_urls.append(url)
+                except Exception as e:
+                     print(f"Неизвестная ошибка при обработке URL {url}: {str(e)}")
+                     report.append(f"⚠️ Не удалось проверить ссылку: `{url}` (Неизвестная ошибка)")
+                     if url not in expanded_urls:
+                         expanded_urls.append(url)
+
+
+            for url_to_check in expanded_urls:
+                vt_result = check_url_virustotal(url_to_check)
+                print(f"VirusTotal Result for {url_to_check}: {vt_result}")
+
+                if vt_result.get('error'):
+                    report.append(f"    - `{url_to_check}`: Ошибка VirusTotal ({vt_result['error']})")
+                elif vt_result.get('status') == 'queued':
+                     report.append(f"    - `{url_to_check}`: ⏳ Отправлен на анализ VT. Повторите через 1-2 мин.")
+                elif vt_result.get('malicious', 0) > 1 or vt_result.get('suspicious', 0) > 1:
+                    report.append(
+                        f"    - `{url_to_check}`: 🔴 Опасно (VT: M:{vt_result['malicious']}, S:{vt_result['suspicious']}, H:{vt_result['harmless']})"
+                    )
+                elif vt_result.get('malicious', 0) > 0 or vt_result.get('suspicious', 0) > 0:
+                     report.append(
+                        f"    - `{url_to_check}`: 🟡 Подозрительно (VT: M:{vt_result['malicious']}, S:{vt_result['suspicious']}, H:{vt_result['harmless']})"
+                    )
+                else:
+                    report.append(
+                        f"    - `{url_to_check}`: ✅ Безопасно (VT: M:{vt_result['malicious']}, S:{vt_result['suspicious']}, H:{vt_result['harmless']})"
+                    )
+        else:
+             report.append("ℹ️ Ссылки в сообщении не найдены.")
+
+
+        if nlp:
+            report.append("\n📝 Анализ текста:")
+            text_result = analyze_text(text)
+            if text_result.get('error'):
+                 report.append(f"    - Ошибка анализа текста: {text_result['error']}")
+            elif text_result.get('label') == 'phishing' and text_result.get('score', 0) > 0.6:
+                report.append(
+                    f"    - 🟡 Подозрительный текст (уверенность: {text_result['score']:.0%})"
+                )
+                if text_result.get('keywords'):
+                    report.append(f"      Найденные ключевые слова: `{', '.join(text_result['keywords'])}`")
+            else:
+                 report.append("    - ✅ Текст не выглядит подозрительным.")
+        else:
+             report.append("\n⚠️ Модель анализа текста не загружена, проверка текста не выполнена.")
+
+
+        if report:
+            bot.reply_to(message, "\n".join(report), parse_mode="Markdown")
+
+    except Exception as e:
+        print(f"Error in perform_analysis: {e}")
+        bot.reply_to(message, f"❌ Произошла внутренняя ошибка при анализе: {str(e)}")
 
 # Обработчики команд
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    """Приветственное сообщение"""
+    """Приветственное сообщение и показ кнопок"""
     help_text = """
-🔍 Я антифишинговый бот! Проверю:
-- Ссылки через VirusTotal
-- Текст на подозрительные фразы
-А ещё проверю твои знания о цифровой безопасности!
+👋 Привет! Я антифишинговый бот.
 
-Команды:
-/safety_test - Тест на основы безопасности
-/check [текст] - Проверить сообщение
+🛡️ Мои возможности:
+- Проверка сообщений: Анализирую текст и ссылки на фишинг и вредоносность с помощью NLP и VirusTotal.
+- Тест безопасности: Проверь свои знания о цифровых угрозах.
+
+👇 Используй кнопки ниже
 """
-    bot.reply_to(message, help_text)
+    image_path = 'cat.jpg'
+    try:
+        with open(image_path, 'rb') as photo_file:
+            # Отправляем фото с текстом в качестве подписи и прикрепляем клавиатуру
+            bot.send_photo(
+                chat_id=message.chat.id,
+                photo=photo_file,
+                caption=help_text,
+                reply_markup=create_main_keyboard()
+            )
+    except FileNotFoundError:
+        print(f"Ошибка: Файл картинки не найден по пути {image_path}")
+        # Если файл не найден, отправляем только текст и кнопки
+        bot.send_message(
+            message.chat.id,
+            help_text + "\n\n(Не удалось загрузить приветственное изображение)",
+            reply_markup=create_main_keyboard()
+        )
+    except Exception as e:
+        print(f"Произошла ошибка при отправке фото: {e}")
+        # Обработка других возможных ошибок при отправке
+        bot.send_message(
+            message.chat.id,
+            "Произошла ошибка при отображении приветствия.",
+            reply_markup=create_main_keyboard()
+        )
+
 
 @bot.message_handler(commands=['safety_test'])
+def start_safety_test_command(message):
+    """Запуск теста через команду"""
+    start_safety_test(message)
+
 def start_safety_test(message):
     """Начало теста"""
     user_id = message.from_user.id
-    user_progress[user_id] = {"current_question": 0, "correct": 0}
-    ask_question(message.chat.id, user_id)
+    chat_id = message.chat.id
+    user_progress[user_id] = {"current_question": 0, "score": 0}
+    bot.send_message(chat_id, "Начинаем тест! Выберите правильный вариант ответа.", reply_markup=types.ReplyKeyboardRemove())
+    ask_question(chat_id, user_id)
+
 
 def ask_question(chat_id: int, user_id: int):
-    """Отправка вопроса с вариантами ответов"""
-    markup = types.InlineKeyboardMarkup()
-    question_data = SAFETY_QUESTIONS[user_progress[user_id]["current_question"]]
-    
+    """Отправка вопроса с вариантами ответов (Inline кнопки)"""
+    if user_id not in user_progress:
+        bot.send_message(chat_id, "Произошла ошибка с тестом. Пожалуйста, начните заново.", reply_markup=create_main_keyboard())
+        return
+
+    current_q_index = user_progress[user_id]["current_question"]
+    if current_q_index >= len(SAFETY_QUESTIONS):
+        finalize_test(chat_id, user_id)
+        return
+
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    question_data = SAFETY_QUESTIONS[current_q_index]
+
     for idx, option in enumerate(question_data["options"]):
         markup.add(types.InlineKeyboardButton(
             text=option,
-            callback_data=f"answer_{user_progress[user_id]['current_question']}_{idx}"
+            callback_data=f"answer_{current_q_index}_{idx}"
         ))
-    
+
     bot.send_message(
         chat_id,
-        f"Вопрос {user_progress[user_id]['current_question']+1}/{len(SAFETY_QUESTIONS)}\n\n" +
+        f"Вопрос {current_q_index + 1}/{len(SAFETY_QUESTIONS)}\n\n" +
         question_data["question"],
-        reply_markup=markup
+        reply_markup=markup,
+        parse_mode="Markdown"
     )
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('answer_'))
 def handle_answer(call):
-    """Обработка ответов на вопросы"""
+    """Обработка ответов на вопросы теста"""
     user_id = call.from_user.id
+    chat_id = call.message.chat.id
+
     if user_id not in user_progress:
+        bot.answer_callback_query(call.id, "Тест не найден для вас. Возможно, бот перезапускался.")
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=call.message.message_id,
+            text="Произошла ошибка. Пожалуйста, начните тест заново.",
+            reply_markup=None
+        )
+        bot.send_message(chat_id, "Вы можете продолжить использовать другие функции.", reply_markup=create_main_keyboard())
         return
-    
-    _, q_idx, a_idx = call.data.split('_')
-    q_idx = int(q_idx)
-    a_idx = int(a_idx)
-    
+
+    try:
+        _, q_idx_str, a_idx_str = call.data.split('_')
+        q_idx = int(q_idx_str)
+        a_idx = int(a_idx_str)
+    except ValueError:
+        print(f"Ошибка парсинга callback_data: {call.data}")
+        bot.answer_callback_query(call.id, "Ошибка обработки ответа.")
+        return
+
+    if q_idx != user_progress[user_id]["current_question"]:
+        bot.answer_callback_query(call.id, "Это ответ на предыдущий вопрос.")
+        return
+
     question = SAFETY_QUESTIONS[q_idx]
-    
-    if a_idx == question["correct"] and user_progress[user_id]["correct"] == 0:
-        user_progress[user_id]["correct"] += 1
-        result = "✅ Правильно! Один верный ответ есть, постарайся ответить верно на оставшиеся вопросы!\n"
-    elif a_idx == question["correct"] and user_progress[user_id]["correct"] > 0:
-        user_progress[user_id]["correct"] += 1
-        result = f"✅ Правильно! На счету верных ответов уже {user_progress[user_id]["correct"]}!\n"
+    is_correct = (a_idx == question["correct"])
+
+    if is_correct:
+        user_progress[user_id]["score"] += 1
+        result_text = "✅ Правильно!\n\n"
     else:
-        result = "❌ Неверно, но не стоит расстраиваться!\n"
-    
+        result_text = f"❌ Неверно. Правильный ответ: {question['options'][question['correct']]}\n\n"
+
     bot.edit_message_text(
-        chat_id=call.message.chat.id,
+        chat_id=chat_id,
         message_id=call.message.message_id,
-        text=result + "\n" + question["explanation"]
+        text=f"**Вопрос {q_idx + 1}:** {question['question']}\n\n" +
+             f"Ваш ответ: {question['options'][a_idx]}\n\n" +
+             result_text +
+             f"**Пояснение:** {question['explanation']}",
+        reply_markup=None,
+        parse_mode="Markdown"
     )
-    
+    bot.answer_callback_query(call.id)
+
     user_progress[user_id]["current_question"] += 1
-    
     if user_progress[user_id]["current_question"] < len(SAFETY_QUESTIONS):
-        ask_question(call.message.chat.id, user_id)
+        ask_question(chat_id, user_id)
     else:
-        correct = user_progress[user_id]["correct"]
-        total = len(SAFETY_QUESTIONS)
-        score = correct / total
-        
-        feedback = (
-            "🎉 Отличный результат!" if score == 1 else
-            "👍 Хорошо, но есть куда расти:" if score >= 0.7 else
-            "⚠️ Нужно подтянуть знания:"
-        )
-        
-        recommendations = [
-            "🧠 1. Будьте внимательны к письмам и сообщениям",
-            "🌐 2. Проверяйте подлинность сайтов",
-            "🧰 3. Используйте менеджеры паролей и уникальные пароли",
-            "🔑 4. Всегда включайте двухфакторную аутентификацию (2FA)",
-            "☠️ 5. Не скачивайте файлы с подозрительных источников",
-            "📶 6. Избегайте работы с конфиденциальными данными в публичных Wi-Fi сетях",
-            "👀 7. Следите за признаками социальной инженерии",
-            "🧼 8. Соблюдайте цифровую гигиену"
-        ]
-        
-        bot.send_message(
-            call.message.chat.id,
-            f"Тест завершен!\nПравильных ответов: {correct}/{total}\n\n{feedback}\n" + 
-            "\n".join(recommendations) + 
-            "\n\nПодробнее: https://www.kaspersky.ru/resource-center/preemptive-safety/top-10-preemptive-safety-rules-and-what-not-to-do-online"
-        )
+        finalize_test(chat_id, user_id)
+
+def finalize_test(chat_id: int, user_id: int):
+    """Завершение теста и вывод результатов"""
+    if user_id not in user_progress: return
+
+    score = user_progress[user_id]["score"]
+    total = len(SAFETY_QUESTIONS)
+    percentage = (score / total) * 100 if total > 0 else 0
+
+    feedback = ""
+    if percentage == 100:
+        feedback = "🎉 Отличный результат! Вы прекрасно осведомлены об основах безопасности!"
+    elif percentage >= 70:
+        feedback = f"👍 Хороший результат ({percentage:.0f}%)! Вы неплохо разбираетесь, но всегда есть что улучшить."
+    elif percentage >= 40:
+        feedback = f"⚠️ Неплохо ({percentage:.0f}%), но стоит подтянуть знания, чтобы лучше защитить себя."
+    else:
+        feedback = f"😥 Низкий результат ({percentage:.0f}%). Рекомендую изучить материалы по цифровой безопасности."
+
+    recommendations_header = "\n\n📌 **Ключевые правила безопасности:**"
+    recommendations = [
+        "1. Используйте **сложные и уникальные пароли** для каждого сервиса.",
+        "2. Включайте **двухфакторную аутентификацию (2FA)** везде, где возможно.",
+        "3. **Будьте подозрительны** к неожиданным письмам, сообщениям и звонкам, особенно если просят личные данные или деньги.",
+        "4. **Проверяйте адреса ссылок** перед переходом, особенно в подозрительных сообщениях.",
+        "5. **Не скачивайте файлы** из ненадежных источников.",
+        "6. **Используйте VPN** при подключении к общественным Wi-Fi сетям.",
+        "7. Регулярно **обновляйте ПО** и операционную систему.",
+        "8. Узнайте больше о фишинге и социальной инженерии."
+    ]
+
+    final_message = (
+        f"🏁 **Тест завершен!**\n\n"
+        f"Правильных ответов: {score} из {total}\n\n"
+        f"{feedback}\n"
+        f"{recommendations_header}\n" +
+        "\n".join(recommendations) +
+        "\n\n🔗 *Подробнее об онлайн-безопасности можно узнать на сайтах экспертов, например, Kaspersky или ESET.*"
+    )
+
+    bot.send_message(
+        chat_id,
+        final_message,
+        reply_markup=create_main_keyboard(),
+        parse_mode="Markdown"
+    )
+
+    if user_id in user_progress:
         del user_progress[user_id]
 
-@bot.message_handler(func=lambda message: True)
-def handle_message(message):
-    """Основной обработчик сообщений"""
+
+@bot.message_handler(commands=['check'])
+def handle_check_command(message):
+    """Обработчик команды /check [текст]"""
     try:
-        text = message.text
-        report = []
-        print(f"Processing message: {text}")
-
-        # 1. Проверка и раскрытие ссылок
-        urls = re.findall(r'http*://*', text)
-        expanded_urls = []
-        for url in urls:
-            try:
-                # Раскрытие сокращенных URL
-                expanded = requests.head(url, allow_redirects=True, timeout=5).url
-                if expanded != url:
-                    report.append(f"🔍 Сокращенная ссылка: {url} -> {expanded}")
-                expanded_urls.append(expanded)
-            except Exception as e:
-                print(f"Ошибка раскрытия URL: {str(e)}")
-                expanded_urls.append(url)
-
-        # 2. Проверка через VirusTotal
-        for url in expanded_urls:
-            vt_result = check_url_virustotal(url)
-            print(f"VirusTotal Result: {vt_result}")
-            
-            if 'malicious' in vt_result and vt_result['malicious'] > 0:
-                report.append(
-                    f"\n🔴 Опасная ссылка: {url}\n"
-                    f"┣ Безопасно: {vt_result['harmless']}\n"
-                    f"┣ Подозрительно: {vt_result['suspicious']}\n"
-                    f"┗ Опасность: {vt_result['malicious']}"
-                )
-
-        # 3. Анализ текста через NLP
-        text_result = analyze_text(text)
-        if text_result.get('label') == 'phishing' and text_result.get('score', 0) > 0.4:
-            report.append(
-                f"\n🟡 Подозрительный текст\n"
-                f"┣ Уверенность: {text_result['score']:.0%}\n"
-                # f"┗ Ключевые слова: {', '.join(text_result.get('keywords', []))}"
+        text_to_check = message.text.split(None, 1)[1]
+        if text_to_check:
+            fake_message = types.Message(
+                message_id=message.message_id,
+                from_user=message.from_user,
+                date=message.date,
+                chat=message.chat,
+                content_type='text',
+                options={},
+                json_string=""
             )
-
-        # 4. Формирование отчета
-        if report:
-            bot.reply_to(message, "\n".join(report))
-            print(expanded_urls)
+            fake_message.text = text_to_check
+            perform_analysis(fake_message)
         else:
-            bot.reply_to(message, "✅ Сообщение безопасно")
-            print(expanded_urls)
-
+            bot.reply_to(message, "Пожалуйста, укажите текст или ссылку после команды /check для проверки.")
+    except IndexError:
+         bot.reply_to(message, "Пожалуйста, укажите текст или ссылку после команды /check для проверки.")
     except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка: {str(e)}")
+        print(f"Error in /check handler: {e}")
+        bot.reply_to(message, f"❌ Ошибка при обработке команды /check: {str(e)}")
+
+
+@bot.message_handler(content_types=['text'])
+def handle_message(message):
+    """Основной обработчик текстовых сообщений и кнопок"""
+    user_id = message.from_user.id
+    text = message.text
+
+    if text == "🔍 Проверить сообщение/ссылку":
+        bot.reply_to(message, "Хорошо, отправьте мне сообщение, которое нужно проверить.")
+    elif text == "🎓 Пройти тест безопасности":
+        start_safety_test(message)
+    elif not text.startswith('/'):
+        perform_analysis(message)
+
 
 if __name__ == "__main__":
     print("Бот запущен...")
-    bot.polling(none_stop=True)
-    
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        print(f"Ошибка polling: {e}")
