@@ -158,7 +158,7 @@ def check_url_virustotal(url: str) -> Dict:
     headers = {'x-apikey': VIRUSTOTAL_API_KEY}
 
     try:
-        encoded_url = base64.urlsafe_b64encode(url.encode()).decode().strip("=")
+        encoded_url = base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
         report_url = f'https://www.virustotal.com/api/v3/urls/{encoded_url}'
 
         response = requests.get(report_url, headers=headers, timeout=10)
