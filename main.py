@@ -185,13 +185,18 @@ def check_url_virustotal(url: str) -> Dict:
                 return {'status': 'queued', 'message': 'URL отправлен на анализ. Повторите проверку через 2 минуты.'}
             else:
                 return {'error': f"Ошибка отправки на сканирование: {response.status_code}"}
+                
+        elif response.status_code == 429:
+            return {'error': 'Превышен лимит запросов к VirusTotal. Попробуйте позже.'}
 
-        return {'error': f"Ошибка API: {response.status_code}"}
-
+        else:
+            return {'error': f'Неизвестная ошибка API: {response.status_code}'}
+                   
+    except requests.exceptions.RequestException as e:
+        return {'error': f"Ошибка сети: {str(e)}"}
+        
     except Exception as e:
-        print(f"VirusTotal Error: {str(e)}")
-        return {'error': f"Ошибка подключения: {str(e)}"}
-
+        return {'error': f"Неизвестная ошибка: {str(e)}"}
 
 def analyze_text(text: str) -> Dict:
     """Анализ текста на фишинг с помощью NLP"""
