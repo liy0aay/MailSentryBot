@@ -23,7 +23,7 @@ def create_main_keyboard():
     """Создает главную клавиатуру с кнопками."""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
     btn_check = types.KeyboardButton("🔍 Проверить сообщение/ссылку")
-    btn_test = types.KeyboardButton("🎓 Пройти тест безопасности")
+    btn_test = types.KeyboardButton("🎓 Пройти тест")
     markup.add(btn_check, btn_test)
     return markup
 
@@ -210,13 +210,7 @@ def analyze_text(text: str) -> Dict:
         result = nlp(truncated_text)[0]
         print(f"NLP Result: {result}")
 
-        phishing_keywords = {
-            'розыгрыш', 'приз', 'победитель', 'подарок', 'коробка', 'бесплатно',
-            'банк', 'карта', 'пароль', 'срочно', 'уведомление', 'дозвониться',
-            'маркетплейс', 'акция', 'выигрыш', 'подтвердить', 'безопасность',
-            'winner', 'prize', 'urgent', 'security', 'verify', 'account'
-        }
-
+        phishing_keywords = {}
         text_lower = text.lower()
         found_keywords = {
             keyword for keyword in phishing_keywords
@@ -240,7 +234,7 @@ def perform_analysis(message):
         report = []
         print(f"Processing message for analysis: {text}")
 
-        urls = re.findall(r'(?:http[s]?|ftp)://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
+        urls = re.findall(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+', text)
         expanded_urls = []
         if urls:
             report.append("🔎 Анализ ссылок:")
