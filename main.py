@@ -243,7 +243,12 @@ def perform_analysis(message):
                 if not url.startswith(('http://', 'https://', 'ftp://')):
                     url = 'http://' + url
                 try:
-                    response = requests.head(url, allow_redirects=True, timeout=7)
+                    response = requests.get(
+                        url,
+                        allow_redirects=True, 
+                        timeout=7,
+                        headers={'User-Agent': 'Mozilla/5.0'}
+                    )
                     expanded = response.url
                     if expanded != url and len(expanded) > len(url) + 5:
                         report.append(f"🔗 Сокращенная ссылка: `{url}` -> `{expanded}`")
