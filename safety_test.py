@@ -1,13 +1,6 @@
-import telebot
 from telebot import types
 
-def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func):
-    global bot, user_progress, create_main_keyboard
-    bot = bot_instance
-    user_progress = progress_dict
-    create_main_keyboard = keyboard_func
-
-    SAFETY_QUESTIONS = [
+SAFETY_QUESTIONS = [
     {
         "question": "Как злоумышленники могут получить ваш пароль, даже если сайт, которым вы пользуетесь, сам не подвергся взлому?",
         "options": [
@@ -109,20 +102,26 @@ def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func):
     }
 ]
     
+def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func):
+    bot = bot_instance
+    user_progress = progress_dict
+    create_main_keyboard = keyboard_func
 
     @bot.message_handler(commands=['safety_test'])
     def start_safety_test_command(message):
-        """Обработчик команды /safety_test"""
+        """Запуск теста через команду"""
         user_id = message.from_user.id
         chat_id = message.chat.id
         user_progress[user_id] = {"current_question": 0, "score": 0}
         bot.send_message(chat_id, "Начинаем тест! Выберите правильный вариант ответа.", 
-                       reply_markup=types.ReplyKeyboardRemove())
+                        reply_markup=types.ReplyKeyboardRemove())
         ask_question(chat_id, user_id)
-    
+
     def ask_question(chat_id: int, user_id: int):
         """Отправка вопроса с вариантами ответов"""
         if user_id not in user_progress:
+            bot.send_message(chat_id, "Произошла ошибка с тестом. Пожалуйста, начните заново.", 
+                           reply_markup=create_main_keyboard())
             return
 
         current_q_index = user_progress[user_id]["current_question"]
@@ -252,32 +251,3 @@ def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func):
 
         if user_id in user_progress:
             del user_progress[user_id]
-
-def ask_question(chat_id: int, user_id: int):
-    """Отправка вопроса с вариантами ответов"""
-    if user_id not in user_progress:
-        bot.send_message(chat_id, "Произошла ошибка с тестом. Пожалуйста, начните заново.", 
-                       reply_markup=create_main_keyboard())
-        return
-
-    current_q_index = user_progress[user_id]["current_question"]
-    if current_q_index >= len(SAFETY_QUESTIONS):
-        finalize_test(chat_id, user_id)
-        return
-
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    question_data = SAFETY_QUESTIONS[current_q_index]
-
-    for idx, option in enumerate(question_data["options"]):
-        markup.add(types.InlineKeyboardButton(
-            text=option,
-            callback_data=f"answer_{current_q_index}_{idx}"
-        ))
-
-    bot.send_message(
-        chat_id,
-        f"Вопрос {current_q_index + 1}/{len(SAFETY_QUESTIONS)}\n\n" +
-        question_data["question"],
-        reply_markup=markup,
-        parse_mode="Markdown"
-    )

@@ -7,9 +7,10 @@ from typing import Dict, List
 from telebot import types
 from dotenv import load_dotenv
 import os
-from safety_test import init_safety_test_handlers, ask_question, finalize_test, SAFETY_QUESTIONS
+from safety_test import init_safety_test_handlers
 
-# Загрузка переменных окружения
+# Загрузка переменных окружения.
+
 load_dotenv()
 API_TOKEN = os.getenv("API_TOKEN")
 VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
@@ -257,10 +258,10 @@ def handle_message(message):
 
     if text == "🔍 Проверить сообщение/ссылку":
         bot.reply_to(message, "Хорошо, отправьте мне сообщение, которое нужно проверить.")
-    elif text == "🎓 Пройти тест безопасности":
+    elif text == "🎓 Пройти тест":
+        # Вызываем команду safety_test, которая была зарегистрирована через init_safety_test_handlers
         bot.send_message(message.chat.id, "Начинаем тест безопасности!", reply_markup=types.ReplyKeyboardRemove())
-        # Обработчик теста уже зарегистрирован через init_safety_test_handlers
-        bot.send_message(message.chat.id, "Используйте команду /safety_test для начала теста")
+        bot.send_message(message.chat.id, "Пожалуйста, используйте команду /safety_test для начала теста")
     elif not text.startswith('/'):
         perform_analysis(message)
 
