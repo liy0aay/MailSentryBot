@@ -121,55 +121,43 @@ def perform_analysis(message):
         print(f"Processing message for analysis: {text}")
 
         urls = re.findall(r'(?:(?:https?|ftp):\/\/)?(?:www\.)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?', text)
-        expanded_urls = []
+        
         if urls:
             report.append("🔎 Анализ ссылок:")
-            for url in urls:
-                if not url.startswith(('http://', 'https://', 'ftp://')):
-                    url = 'http://' + url
+            for original_url in urls:
+                url_to_check = original_url if original_url.startswith(('http://', 'https://', 'ftp://')) else 'http://' + original_url
                 try:
                     response = requests.get(
-                        url,
+                        url_to_check,
                         allow_redirects=True, 
                         timeout=7,
                         headers={'User-Agent': 'Mozilla/5.0'}
                     )
-                    expanded = response.url
-                    if expanded != url and len(expanded) > len(url) + 5:
-                        report.append(f"🔗 Сокращенная ссылка: `{url}` -> `{expanded}`")
-                    expanded_urls.append(expanded)
+                    expanded_url = response.url
 
+                    vt_result = check_url_virustotal(expanded_url)
+                    print(f"VirusTotal Result for {expanded_url}: {vt_result}")
+    
+                    if vt_result.get('error'):
+                        report.append(f"    - `{original_url}`: Ошибка VirusTotal ({vt_result['error']})")
+                    elif vt_result.get('status') == 'queued':
+                         report.append(f"    - `{original_url}`: ⏳ Отправлен на анализ VT. Повторите через 1-2 мин.")
+                    elif vt_result.get('malicious', 0) > 1 or vt_result.get('suspicious', 0) > 1:
+                        report.append(
+                            f"    - `{original_url}`: 🔴 Опасно"
+                        )
+                    elif vt_result.get('malicious', 0) > 0 or vt_result.get('suspicious', 0) > 0:
+                         report.append(
+                            f"    - `{original_url}`: 🟡 Подозрительно"
+                        )
+                    else:
+                        report.append(
+                            f"    - `{original_url}`: ✅ Безопасно"
+                        )
                 except requests.exceptions.RequestException as e:
-                    print(f"Ошибка раскрытия URL {url}: {str(e)}")
-                    report.append(f"⚠️ Не удалось проверить ссылку: `{url}` (Ошибка: {type(e).__name__})")
-                    if url not in expanded_urls:
-                         expanded_urls.append(url)
+                    report.append(f"    - `{original_url}`: ⚠️ Не удалось проверить (Ошибка сети)")
                 except Exception as e:
-                     print(f"Неизвестная ошибка при обработке URL {url}: {str(e)}")
-                     report.append(f"⚠️ Не удалось проверить ссылку: `{url}` (Неизвестная ошибка)")
-                     if url not in expanded_urls:
-                         expanded_urls.append(url)
-
-            for url_to_check in expanded_urls:
-                vt_result = check_url_virustotal(url_to_check)
-                print(f"VirusTotal Result for {url_to_check}: {vt_result}")
-
-                if vt_result.get('error'):
-                    report.append(f"    - `{url_to_check}`: Ошибка VirusTotal ({vt_result['error']})")
-                elif vt_result.get('status') == 'queued':
-                     report.append(f"    - `{url_to_check}`: ⏳ Отправлен на анализ VT. Повторите через 1-2 мин.")
-                elif vt_result.get('malicious', 0) > 1 or vt_result.get('suspicious', 0) > 1:
-                    report.append(
-                        f"    - `{url_to_check}`: 🔴 Опасно (VT: Опасно:{vt_result['malicious']}, Подозрительно:{vt_result['suspicious']}, Безопасн:{vt_result['harmless']})"
-                    )
-                elif vt_result.get('malicious', 0) > 0 or vt_result.get('suspicious', 0) > 0:
-                     report.append(
-                        f"    - `{url_to_check}`: 🟡 Подозрительно (VT: M:{vt_result['malicious']}, S:{vt_result['suspicious']}, H:{vt_result['harmless']})"
-                    )
-                else:
-                    report.append(
-                        f"    - `{url_to_check}`: ✅ Безопасно (VT: M:{vt_result['malicious']}, S:{vt_result['suspicious']}, H:{vt_result['harmless']})"
-                    )
+                    report.append(f"    - `{original_url}`: ⚠️ Ошибка при проверке ({type(e).__name__})")
         else:
              report.append("ℹ️ Ссылки в сообщении не найдены.")
 
