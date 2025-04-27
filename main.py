@@ -120,7 +120,7 @@ def perform_analysis(message):
         report = []
         print(f"Processing message for analysis: {text}")
 
-        urls = re.findall(r'(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+', text)
+        urls = re.findall(r'(?:(?:https?|ftp):\/\/)?(?:www\.)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s]*)?', text)
         expanded_urls = []
         if urls:
             report.append("🔎 Анализ ссылок:")
