@@ -1,0 +1,127 @@
+\doxysection{analyzers.\+Phishing\+Analyzer Class Reference}
+\hypertarget{classanalyzers_1_1_phishing_analyzer}{}\label{classanalyzers_1_1_phishing_analyzer}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+Inheritance diagram for analyzers.\+Phishing\+Analyzer\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classanalyzers_1_1_phishing_analyzer}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer_aa9ba4a30af93732ed10028f6ce0130de}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, \mbox{\hyperlink{classanalyzers_1_1_virus_total_client}{Virus\+Total\+Client}} vt\+\_\+client, nlp\+\_\+pipeline=None, tokenizer=None)
+\item 
+dict \mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer_a20721b0c2270971fcacab9058d9e8e88}{analyze\+\_\+text}} (self, str text)
+\item 
+list \mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer_a9dbb47aeaa52c1aea119f44774d27f5f}{extract\+\_\+urls}} (self, str text)
+\item 
+list \mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer_a1387baa9cc7a7cbaa81489565f05c044}{analyze\+\_\+message}} (self, str text)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_a3fcc818b6c0ad6bf62cae1bd25e60930}\label{classanalyzers_1_1_phishing_analyzer_a3fcc818b6c0ad6bf62cae1bd25e60930} 
+{\bfseries vt\+\_\+client} = vt\+\_\+client
+\item 
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_a8412c25931253d3bba485caf033b4bf9}\label{classanalyzers_1_1_phishing_analyzer_a8412c25931253d3bba485caf033b4bf9} 
+{\bfseries nlp} = nlp\+\_\+pipeline
+\item 
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_a21d12535ac9b54b999e5415552930ef1}\label{classanalyzers_1_1_phishing_analyzer_a21d12535ac9b54b999e5415552930ef1} 
+{\bfseries tokenizer} = tokenizer
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+str \mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer_ac03eb57d1777d3dde2116485def1cbd7}{\+\_\+check\+\_\+url\+\_\+risk}} (self, str url)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\begin{DoxyVerb}Комплексный анализатор фишинговых сообщений.
+
+Совмещает анализ текста через NLP и проверку URL через VirusTotal.
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_aa9ba4a30af93732ed10028f6ce0130de}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+\doxysubsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_phishing_analyzer_aa9ba4a30af93732ed10028f6ce0130de} 
+analyzers.\+Phishing\+Analyzer.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{\mbox{\hyperlink{classanalyzers_1_1_virus_total_client}{Virus\+Total\+Client}}}]{vt\+\_\+client}{, }\item[{}]{nlp\+\_\+pipeline}{ = {\ttfamily None}, }\item[{}]{tokenizer}{ = {\ttfamily None}}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Инициализирует анализатор фишинговых сообщений.
+
+Args:
+    vt_client (VirusTotalClient): Клиент для проверки URL
+    nlp_pipeline: NLP-модель для анализа текста (по умолчанию None)
+    tokenizer: Токенизатор для NLP-модели (по умолчанию None)
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_ac03eb57d1777d3dde2116485def1cbd7}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}!\_check\_url\_risk@{\_check\_url\_risk}}
+\index{\_check\_url\_risk@{\_check\_url\_risk}!analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+\doxysubsubsection{\texorpdfstring{\_check\_url\_risk()}{\_check\_url\_risk()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_phishing_analyzer_ac03eb57d1777d3dde2116485def1cbd7} 
+ str analyzers.\+Phishing\+Analyzer.\+\_\+check\+\_\+url\+\_\+risk (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{url}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+\begin{DoxyVerb}Проверяет риск URL (внутренний метод).
+
+Args:
+    url (str): URL для проверки
+
+Returns:
+    str: Форматированная строка с результатом проверки
+\end{DoxyVerb}
+ \Hypertarget{classanalyzers_1_1_phishing_analyzer_a1387baa9cc7a7cbaa81489565f05c044}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}!analyze\_message@{analyze\_message}}
+\index{analyze\_message@{analyze\_message}!analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+\doxysubsubsection{\texorpdfstring{analyze\_message()}{analyze\_message()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_phishing_analyzer_a1387baa9cc7a7cbaa81489565f05c044} 
+ list analyzers.\+Phishing\+Analyzer.\+analyze\+\_\+message (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{text}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Анализирует сообщение на фишинг.
+
+Args:
+    text (str): Текст сообщения для анализа
+
+Returns:
+    list: Отчет с результатами анализа URL и текста
+\end{DoxyVerb}
+ 
+
+Reimplemented from \mbox{\hyperlink{classanalyzers_1_1_base_analyzer_a62aca58ab26d01be75004ed97c8b10d1}{analyzers.\+Base\+Analyzer}}.
+
+\Hypertarget{classanalyzers_1_1_phishing_analyzer_a20721b0c2270971fcacab9058d9e8e88}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}!analyze\_text@{analyze\_text}}
+\index{analyze\_text@{analyze\_text}!analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+\doxysubsubsection{\texorpdfstring{analyze\_text()}{analyze\_text()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_phishing_analyzer_a20721b0c2270971fcacab9058d9e8e88} 
+ dict analyzers.\+Phishing\+Analyzer.\+analyze\+\_\+text (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{text}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Анализирует текст на признаки фишинга.
+
+Args:
+    text (str): Текст для анализа
+
+Returns:
+    dict: Результат анализа с меткой и уверенностью
+\end{DoxyVerb}
+ \Hypertarget{classanalyzers_1_1_phishing_analyzer_a9dbb47aeaa52c1aea119f44774d27f5f}\index{analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}!extract\_urls@{extract\_urls}}
+\index{extract\_urls@{extract\_urls}!analyzers.PhishingAnalyzer@{analyzers.PhishingAnalyzer}}
+\doxysubsubsection{\texorpdfstring{extract\_urls()}{extract\_urls()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_phishing_analyzer_a9dbb47aeaa52c1aea119f44774d27f5f} 
+ list analyzers.\+Phishing\+Analyzer.\+extract\+\_\+urls (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{text}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Извлекает URL из текста.
+
+Args:
+    text (str): Текст для поиска URL
+
+Returns:
+    list: Список найденных URL
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+analyzers.\+py\end{DoxyCompactItemize}

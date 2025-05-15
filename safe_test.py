@@ -1,3 +1,10 @@
+"""Модуль тестирования знаний по кибербезопасности
+
+    Содержит:
+    - Базу вопросов по безопасности (SAFETY_QUESTIONS)
+    - Логику тестирования через Telegram бота
+    - Систему оценки результатов
+"""
 from telebot import types
 
 SAFETY_QUESTIONS = [
@@ -93,12 +100,24 @@ SAFETY_QUESTIONS = [
 
 
 def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func) -> None:
+    """Инициализирует обработчики команд для теста безопасности в Telegram боте.
+
+    Args:
+        bot_instance (telebot.TeleBot): Экземпляр Telegram бота
+        progress_dict (dict): Словарь для хранения прогресса пользователей
+        keyboard_func (function): Функция создания основной клавиатуры
+    """  
     bot = bot_instance
     user_progress = progress_dict
     create_main_keyboard = keyboard_func
 
     @bot.message_handler(commands=["safety_test"])
     def start_safety_test_command(message):
+        """Обработчик команды /safety_test - начинает новый тест безопасности.
+        
+        Args:
+            message (types.Message): Входящее сообщение от пользователя
+        """             
         user_id = message.from_user.id
         chat_id = message.chat.id
 
@@ -112,6 +131,12 @@ def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func) -> Non
         ask_question(chat_id, user_id)
 
     def ask_question(chat_id: int, user_id: int) -> None:
+        """Задает пользователю следующий вопрос теста.
+
+        Args:
+            chat_id (int): ID чата для отправки сообщения
+            user_id (int): ID пользователя для отслеживания прогресса
+        """         
         if user_id not in user_progress:
             bot.send_message(chat_id, "Произошла ошибка. Начните тест заново.",
                              reply_markup=create_main_keyboard())
@@ -138,6 +163,11 @@ def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func) -> Non
 
     @bot.message_handler(func=lambda msg: is_answer(msg.text))
     def handle_text_answer(message):
+        """Обрабатывает ответ пользователя на вопрос теста.
+
+        Args:
+            message (types.Message): Сообщение с выбранным вариантом ответа
+        """  
         user_id = message.from_user.id
         chat_id = message.chat.id
 
@@ -177,9 +207,23 @@ def init_safety_test_handlers(bot_instance, progress_dict, keyboard_func) -> Non
         ask_question(chat_id, user_id)
 
     def is_answer(text: str) -> bool:
+        """Проверяет, является ли текст вариантом ответа на любой из вопросов.
+
+        Args:
+            text (str): Текст для проверки
+
+        Returns:
+            bool: True если текст совпадает с любым вариантом ответа, иначе False
+        """     
         return any(text == option for q in SAFETY_QUESTIONS for option in q["options"])
 
     def finalize_test(chat_id: int, user_id: int) -> None:
+        """Завершает тест и выводит результаты пользователю.
+
+        Args:
+            chat_id (int): ID чата для отправки результатов
+            user_id (int): ID пользователя для получения результатов
+        """           
         if user_id not in user_progress:
             return
 

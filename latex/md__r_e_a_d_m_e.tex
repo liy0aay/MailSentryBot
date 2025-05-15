@@ -1,0 +1,45 @@
+\chapter{Cyber\+Sentry\+Bot}
+\hypertarget{md__r_e_a_d_m_e}{}\label{md__r_e_a_d_m_e}\index{CyberSentryBot@{CyberSentryBot}}
+\label{md__r_e_a_d_m_e_autotoc_md0}%
+\Hypertarget{md__r_e_a_d_m_e_autotoc_md0}%
+
+
+{\bfseries{Telegram-\/бот}}, который помогает распознать подозрительные сообщения и сомнительные ссылки, а также позволяет узнать, как защитить себя в цифровом мире. ~\newline
+
+
+\DoxyHorRuler{0}
+\hypertarget{md__r_e_a_d_m_e_autotoc_md2}{}\doxysection{\texorpdfstring{Что делает бот?}{Что делает бот?}}\label{md__r_e_a_d_m_e_autotoc_md2}
+
+\begin{DoxyItemize}
+\item Проверяет все ссылки в сообщении через \href{https://www.virustotal.com/}{\texttt{ Virus\+Total}}
+\item Анализирует текст на наличие фишинговых шаблонов с помощью NLP (модель BERT)
+\item Формирует отчёт\+: безопасно / подозрительно / опасно
+\item Предлагает пройти тест на знание цифровой безопасности
+\end{DoxyItemize}
+
+\DoxyHorRuler{0}
+\hypertarget{md__r_e_a_d_m_e_autotoc_md4}{}\doxysection{\texorpdfstring{Почему это важно?}{Почему это важно?}}\label{md__r_e_a_d_m_e_autotoc_md4}
+\begin{quote}
+{\bfseries{Фишинг демонстрирует кратный рост по числу успешных инцидентов с каждым годом.}} \end{quote}
+
+
+Бот создан, чтобы {\bfseries{быстро, удобно и без лишнего стресса}} проверить подозрительные письма и сообщения. В первую очередь ориентирован на тексты SMS и рассылок в мессенджерах.
+
+\DoxyHorRuler{0}
+\hypertarget{md__r_e_a_d_m_e_autotoc_md6}{}\doxysection{\texorpdfstring{Как использовать}{Как использовать}}\label{md__r_e_a_d_m_e_autotoc_md6}
+
+\begin{DoxyEnumerate}
+\item Найдите бота в Telegram\+: {\ttfamily @Mail\+Sentry\+\_\+bot}
+\item Скопируйте подозрительное сообщение (письмо, текст, ссылку)
+\item Вставьте в чат с ботом
+\item Получите отчёт о безопасности!
+\end{DoxyEnumerate}
+
+\DoxyHorRuler{0}
+\hypertarget{md__r_e_a_d_m_e_autotoc_md8}{}\doxysection{\texorpdfstring{⚙️ Технологии}{⚙️ Технологии}}\label{md__r_e_a_d_m_e_autotoc_md8}
+
+\begin{DoxyItemize}
+\item Telegram Bot API
+\item NLP\+: Hugging\+Face {\ttfamily transformers} ({\ttfamily bert-\/tiny-\/finetuned-\/sms-\/spam-\/detection})
+\item Virus\+Total API 
+\end{DoxyItemize}

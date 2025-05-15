@@ -1,15 +1,43 @@
+"""
+Модуль для анализа фишинга через VirusTotal и NLP.
+
+Классы:
+    - VirusTotalClient: Проверка URL через VirusTotal API
+    - PhishingAnalyzer: Анализ текста и ссылок на фишинг
+
+Требования:
+    - Python 3.8+
+    - Библиотеки: requests, transformers
+"""
 import re
 import base64
 import requests
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 
-
 class VirusTotalClient:
+    """Клиент для работы с VirusTotal API.
+    
+    Предоставляет методы для проверки URL через VirusTotal.
+    """     
     def __init__(self, api_key: str):
+        """Инициализирует клиент VirusTotal.
+
+        Args:
+            api_key (str): API-ключ для доступа к VirusTotal API
+        """           
         self.api_key = api_key
         self.headers = {'x-apikey': self.api_key}
 
     def _handle_api_error(self, response, url: str) -> dict:
+        """Обрабатывает ошибки API VirusTotal (внутренний метод).
+
+        Args:
+            response: Объект ответа requests
+            url (str): Исходный URL, который проверялся
+
+        Returns:
+            dict: Сообщение об ошибке или статусе проверки
+        """          
         if response.status_code == 404:
             scan_url = 'https://www.virustotal.com/api/v3/urls'
             resp = requests.post(scan_url, headers=self.headers, data={'url': url})
@@ -24,6 +52,18 @@ class VirusTotalClient:
         return {'error': f'Ошибка API: {response.status_code}'}
 
     def check_url(self, url: str) -> dict:
+        """Проверяет URL через VirusTotal API.
+
+        Args:
+            url (str): URL для проверки
+
+        Returns:
+            dict: Результат проверки с ключами:
+                - malicious (int): Число детектов как вредоносный
+                - suspicious (int): Число подозрительных детектов  
+                - harmless (int): Число безопасных детектов
+                - error (str): Сообщение об ошибке (при наличии)
+        """
         try:
             encoded = base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
             api_url = f'https://www.virustotal.com/api/v3/urls/{encoded}'
@@ -51,19 +91,53 @@ class VirusTotalClient:
 
 
 class BaseAnalyzer:
+    """Базовый класс для анализаторов сообщений.
+    
+    Определяет интерфейс для анализа текста.
+    """    
     def analyze_message(self, text: str) -> list:
+        """Анализирует текст сообщения.
+
+        Args:
+            text (str): Текст для анализа
+
+        Raises:
+            NotImplementedError: Если метод не реализован в подклассе
+
+        Returns:
+            list: Результаты анализа
+        """         
         raise NotImplementedError(
             "Метод должен быть реализован в подклассе"
         )
 
 
 class PhishingAnalyzer(BaseAnalyzer):
+    """Комплексный анализатор фишинговых сообщений.
+    
+    Совмещает анализ текста через NLP и проверку URL через VirusTotal.
+    """  
     def __init__(self, vt_client: VirusTotalClient, nlp_pipeline=None, tokenizer=None):
+        """Инициализирует анализатор фишинговых сообщений.
+
+        Args:
+            vt_client (VirusTotalClient): Клиент для проверки URL
+            nlp_pipeline: NLP-модель для анализа текста (по умолчанию None)
+            tokenizer: Токенизатор для NLP-модели (по умолчанию None)
+        """       
         self.vt_client = vt_client
         self.nlp = nlp_pipeline
         self.tokenizer = tokenizer
 
     def analyze_text(self, text: str) -> dict:
+        """Анализирует текст на признаки фишинга.
+
+        Args:
+            text (str): Текст для анализа
+
+        Returns:
+            dict: Результат анализа с меткой и уверенностью
+        """               
         if not self.nlp or not self.tokenizer:
             return {'error': 'Модель не загружена'}
 
@@ -83,6 +157,14 @@ class PhishingAnalyzer(BaseAnalyzer):
             return {'error': str(e)}
 
     def extract_urls(self, text: str) -> list:
+        """Извлекает URL из текста.
+
+        Args:
+            text (str): Текст для поиска URL
+
+        Returns:
+            list: Список найденных URL
+        """   
         return re.findall(
             r'(?:(?:https?|ftp):\/\/)?'
             r'(?:www\.)?'
@@ -92,6 +174,14 @@ class PhishingAnalyzer(BaseAnalyzer):
         )
 
     def _check_url_risk(self, url: str) -> str: # метод строго внутри класса
+        """Проверяет риск URL (внутренний метод).
+
+        Args:
+            url (str): URL для проверки
+
+        Returns:
+            str: Форматированная строка с результатом проверки
+        """ 
         full_url = url if url.startswith(('http://', 'https://', 'ftp://')) \
             else f'http://{url}'
         try:
@@ -115,6 +205,14 @@ class PhishingAnalyzer(BaseAnalyzer):
             return f"    - `{url}`: ⚠️ Ошибка ({type(e).__name__})"
 
     def analyze_message(self, text: str) -> list:
+        """Анализирует сообщение на фишинг.
+
+        Args:
+            text (str): Текст сообщения для анализа
+
+        Returns:
+            list: Отчет с результатами анализа URL и текста
+        """          
         report = []
 
         urls = self.extract_urls(text)

@@ -1,0 +1,172 @@
+\doxysection{main Namespace Reference}
+\hypertarget{namespacemain}{}\label{namespacemain}\index{main@{main}}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{namespacemain_a4c9e665bbd3541bc22f24c298f13b7e5}{load\+\_\+nlp\+\_\+model}} ()
+\item 
+\mbox{\hyperlink{namespacemain_a2815ee5afb4021fef65bebecffe1c7b6}{perform\+\_\+analysis}} (types.\+Message message, \mbox{\hyperlink{classanalyzers_1_1_base_analyzer}{Base\+Analyzer}} analyzer)
+\item 
+\mbox{\hyperlink{namespacemain_a0f9f6d7f502d8b9f88e4f6157d24362e}{create\+\_\+main\+\_\+keyboard}} ()
+\item 
+\mbox{\hyperlink{namespacemain_aefa7c7eb2924ba57f159f923eedbca6e}{get\+\_\+help\+\_\+text}} ()
+\item 
+\mbox{\hyperlink{namespacemain_a91b86a7df76ad043c5dff25b024f8c6a}{send\+\_\+welcome}} (message)
+\item 
+\mbox{\hyperlink{namespacemain_a4eb7ad40f7c2e076c13cb0f6b71f2ae1}{check\+\_\+handler}} (message)
+\item 
+\mbox{\hyperlink{namespacemain_aa8ba65e03cceb052368a2933533a5eb8}{handle\+\_\+message}} (message)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{namespacemain_ab8bae1be9b182ca4636565dd48ae89b9}\label{namespacemain_ab8bae1be9b182ca4636565dd48ae89b9} 
+{\bfseries API\+\_\+\+TOKEN} = os.\+getenv("{}API\+\_\+\+TOKEN"{})
+\item 
+\Hypertarget{namespacemain_a627287c6d7ca3a90610c6794b24a5acb}\label{namespacemain_a627287c6d7ca3a90610c6794b24a5acb} 
+{\bfseries VIRUSTOTAL\+\_\+\+API\+\_\+\+KEY} = os.\+getenv("{}VIRUSTOTAL\+\_\+\+API\+\_\+\+KEY"{})
+\item 
+\Hypertarget{namespacemain_ad8b9d48843a4865c1757347658820ba8}\label{namespacemain_ad8b9d48843a4865c1757347658820ba8} 
+{\bfseries nlp}
+\item 
+\Hypertarget{namespacemain_a6faf8441fa10fe1e2bdb23c5f6ad9e30}\label{namespacemain_a6faf8441fa10fe1e2bdb23c5f6ad9e30} 
+{\bfseries tokenizer}
+\item 
+\Hypertarget{namespacemain_a898fa8d3130042d14d3c96da0e4556f1}\label{namespacemain_a898fa8d3130042d14d3c96da0e4556f1} 
+{\bfseries vt\+\_\+client} = \mbox{\hyperlink{classanalyzers_1_1_virus_total_client}{Virus\+Total\+Client}}(VIRUSTOTAL\+\_\+\+API\+\_\+\+KEY)
+\item 
+\Hypertarget{namespacemain_aed7ffd529895f8dd17b62604b342f78c}\label{namespacemain_aed7ffd529895f8dd17b62604b342f78c} 
+{\bfseries analyzer} = \mbox{\hyperlink{classanalyzers_1_1_phishing_analyzer}{Phishing\+Analyzer}}(vt\+\_\+client, nlp, tokenizer)
+\item 
+\Hypertarget{namespacemain_a025c12c4c0c5e85e1f13223fbf66c204}\label{namespacemain_a025c12c4c0c5e85e1f13223fbf66c204} 
+{\bfseries bot} = telebot.\+Tele\+Bot(API\+\_\+\+TOKEN)
+\item 
+\Hypertarget{namespacemain_a370fd2755532a204dee0c8312a04d153}\label{namespacemain_a370fd2755532a204dee0c8312a04d153} 
+dict {\bfseries user\+\_\+progress} = \{\}
+\item 
+\Hypertarget{namespacemain_a970c2b7d3b39e9f6ea549a9c6a5e3896}\label{namespacemain_a970c2b7d3b39e9f6ea549a9c6a5e3896} 
+{\bfseries none\+\_\+stop}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\begin{DoxyVerb}Антифишинговый Telegram бот для анализа безопасности сообщений
+
+Основные функции:
+- Анализ текста на фишинг с использованием NLP моделей
+- Проверка URL через VirusTotal API
+- Интерактивный тест знаний по кибербезопасности
+- Пользовательский интерфейс с кнопками и обработкой команд
+
+Требуемые переменные окружения:
+- API_TOKEN: Токен Telegram бота
+- VIRUSTOTAL_API_KEY: Ключ для VirusTotal API
+
+Используемые технологии:
+- Python-telegram-bot для работы с Telegram API
+- Transformers для NLP анализа
+- VirusTotal API для проверки URL
+
+Raises:
+    ValueError: При отсутсвии необходимых переменных окружения
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Function Documentation}
+\Hypertarget{namespacemain_a4eb7ad40f7c2e076c13cb0f6b71f2ae1}\index{main@{main}!check\_handler@{check\_handler}}
+\index{check\_handler@{check\_handler}!main@{main}}
+\doxysubsubsection{\texorpdfstring{check\_handler()}{check\_handler()}}
+{\footnotesize\ttfamily \label{namespacemain_a4eb7ad40f7c2e076c13cb0f6b71f2ae1} 
+main.\+check\+\_\+handler (\begin{DoxyParamCaption}\item[{}]{message}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Обрабатывает команду /check для ручной проверки текста.
+
+Args:
+    message (types.Message): Сообщение с командой и текстом для проверки
+
+Behavior:
+    - Извлекает текст после команды /check
+    - Анализирует текст через анализатор
+    - Отправляет результат пользователю
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_a0f9f6d7f502d8b9f88e4f6157d24362e}\index{main@{main}!create\_main\_keyboard@{create\_main\_keyboard}}
+\index{create\_main\_keyboard@{create\_main\_keyboard}!main@{main}}
+\doxysubsubsection{\texorpdfstring{create\_main\_keyboard()}{create\_main\_keyboard()}}
+{\footnotesize\ttfamily \label{namespacemain_a0f9f6d7f502d8b9f88e4f6157d24362e} 
+main.\+create\+\_\+main\+\_\+keyboard (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Создает клавиатуру с основными командами.
+
+Returns:
+    types.ReplyKeyboardMarkup: Клавиатура с кнопками для проверки сообщения/ссылки и для прохождения теста
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_aefa7c7eb2924ba57f159f923eedbca6e}\index{main@{main}!get\_help\_text@{get\_help\_text}}
+\index{get\_help\_text@{get\_help\_text}!main@{main}}
+\doxysubsubsection{\texorpdfstring{get\_help\_text()}{get\_help\_text()}}
+{\footnotesize\ttfamily \label{namespacemain_aefa7c7eb2924ba57f159f923eedbca6e} 
+main.\+get\+\_\+help\+\_\+text (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Генерирует текст справки о возможностях бота.
+
+Returns:
+    str: Форматированное описание функционала бота
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_aa8ba65e03cceb052368a2933533a5eb8}\index{main@{main}!handle\_message@{handle\_message}}
+\index{handle\_message@{handle\_message}!main@{main}}
+\doxysubsubsection{\texorpdfstring{handle\_message()}{handle\_message()}}
+{\footnotesize\ttfamily \label{namespacemain_aa8ba65e03cceb052368a2933533a5eb8} 
+main.\+handle\+\_\+message (\begin{DoxyParamCaption}\item[{}]{message}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Обрабатывает текстовые сообщения от пользователя.
+
+Args:
+    message (types.Message): Входящее текстовое сообщение
+
+Behavior:
+    - Для кнопки проверки: запрашивает сообщение для анализа
+    - Для кнопки теста: запускает тест безопасности
+    - Для обычного текста: выполняет анализ на фишинг
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_a4c9e665bbd3541bc22f24c298f13b7e5}\index{main@{main}!load\_nlp\_model@{load\_nlp\_model}}
+\index{load\_nlp\_model@{load\_nlp\_model}!main@{main}}
+\doxysubsubsection{\texorpdfstring{load\_nlp\_model()}{load\_nlp\_model()}}
+{\footnotesize\ttfamily \label{namespacemain_a4c9e665bbd3541bc22f24c298f13b7e5} 
+main.\+load\+\_\+nlp\+\_\+model (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Загружает и инициализирует NLP модель для детекции спама/фишинга.
+
+Returns:
+    tuple: (nlp_pipeline, tokenizer) - пайплайн обработки текста и токенизатор
+    или (None, None) в случае ошибки
+
+Raises:
+    Exception: При ошибках загрузки модели или токенизатора
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_a2815ee5afb4021fef65bebecffe1c7b6}\index{main@{main}!perform\_analysis@{perform\_analysis}}
+\index{perform\_analysis@{perform\_analysis}!main@{main}}
+\doxysubsubsection{\texorpdfstring{perform\_analysis()}{perform\_analysis()}}
+{\footnotesize\ttfamily \label{namespacemain_a2815ee5afb4021fef65bebecffe1c7b6} 
+main.\+perform\+\_\+analysis (\begin{DoxyParamCaption}\item[{types.\+Message}]{message}{, }\item[{\mbox{\hyperlink{classanalyzers_1_1_base_analyzer}{Base\+Analyzer}}}]{analyzer}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Выполняет анализ сообщения на фишинг и отправляет результат пользователю.
+
+Args:
+    message (types.Message): Объект сообщения от пользователя
+    analyzer (BaseAnalyzer): Анализатор для проверки сообщений
+\end{DoxyVerb}
+ \Hypertarget{namespacemain_a91b86a7df76ad043c5dff25b024f8c6a}\index{main@{main}!send\_welcome@{send\_welcome}}
+\index{send\_welcome@{send\_welcome}!main@{main}}
+\doxysubsubsection{\texorpdfstring{send\_welcome()}{send\_welcome()}}
+{\footnotesize\ttfamily \label{namespacemain_a91b86a7df76ad043c5dff25b024f8c6a} 
+main.\+send\+\_\+welcome (\begin{DoxyParamCaption}\item[{}]{message}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Обрабатывает команды /start и /help, отправляет приветственное сообщение.
+
+Args:
+    message (types.Message): Входящее сообщение от пользователя
+
+Behavior:
+    - Отправляет логотип с описанием функционала
+    - В случае ошибки отправляет текстовое описание
+\end{DoxyVerb}
+ 

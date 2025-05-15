@@ -1,0 +1,85 @@
+\doxysection{analyzers.\+Virus\+Total\+Client Class Reference}
+\hypertarget{classanalyzers_1_1_virus_total_client}{}\label{classanalyzers_1_1_virus_total_client}\index{analyzers.VirusTotalClient@{analyzers.VirusTotalClient}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classanalyzers_1_1_virus_total_client_ad6403b921fae13c43033e4854a887736}{\+\_\+\+\_\+init\+\_\+\+\_\+}} (self, str api\+\_\+key)
+\item 
+dict \mbox{\hyperlink{classanalyzers_1_1_virus_total_client_a51999e30e8a7ad94669592a169d4e039}{check\+\_\+url}} (self, str url)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classanalyzers_1_1_virus_total_client_a22c7333cfcdb3f43404725d86a097496}\label{classanalyzers_1_1_virus_total_client_a22c7333cfcdb3f43404725d86a097496} 
+{\bfseries api\+\_\+key} = api\+\_\+key
+\item 
+\Hypertarget{classanalyzers_1_1_virus_total_client_a6246c1b8e3a946b0b35151c1f2a25a8f}\label{classanalyzers_1_1_virus_total_client_a6246c1b8e3a946b0b35151c1f2a25a8f} 
+dict {\bfseries headers} = \{\textquotesingle{}x-\/apikey\textquotesingle{}\+: self.\+api\+\_\+key\}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+dict \mbox{\hyperlink{classanalyzers_1_1_virus_total_client_a32b12a592a25532e5d5d9f3ca456d59d}{\+\_\+handle\+\_\+api\+\_\+error}} (self, response, str url)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\begin{DoxyVerb}Клиент для работы с VirusTotal API.
+
+Предоставляет методы для проверки URL через VirusTotal.
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classanalyzers_1_1_virus_total_client_ad6403b921fae13c43033e4854a887736}\index{analyzers.VirusTotalClient@{analyzers.VirusTotalClient}!\_\_init\_\_@{\_\_init\_\_}}
+\index{\_\_init\_\_@{\_\_init\_\_}!analyzers.VirusTotalClient@{analyzers.VirusTotalClient}}
+\doxysubsubsection{\texorpdfstring{\_\_init\_\_()}{\_\_init\_\_()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_virus_total_client_ad6403b921fae13c43033e4854a887736} 
+analyzers.\+Virus\+Total\+Client.\+\_\+\+\_\+init\+\_\+\+\_\+ (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{api\+\_\+key}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Инициализирует клиент VirusTotal.
+
+Args:
+    api_key (str): API-ключ для доступа к VirusTotal API
+\end{DoxyVerb}
+ 
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classanalyzers_1_1_virus_total_client_a32b12a592a25532e5d5d9f3ca456d59d}\index{analyzers.VirusTotalClient@{analyzers.VirusTotalClient}!\_handle\_api\_error@{\_handle\_api\_error}}
+\index{\_handle\_api\_error@{\_handle\_api\_error}!analyzers.VirusTotalClient@{analyzers.VirusTotalClient}}
+\doxysubsubsection{\texorpdfstring{\_handle\_api\_error()}{\_handle\_api\_error()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_virus_total_client_a32b12a592a25532e5d5d9f3ca456d59d} 
+ dict analyzers.\+Virus\+Total\+Client.\+\_\+handle\+\_\+api\+\_\+error (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{}]{response}{, }\item[{str}]{url}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+\begin{DoxyVerb}Обрабатывает ошибки API VirusTotal (внутренний метод).
+
+Args:
+    response: Объект ответа requests
+    url (str): Исходный URL, который проверялся
+
+Returns:
+    dict: Сообщение об ошибке или статусе проверки
+\end{DoxyVerb}
+ \Hypertarget{classanalyzers_1_1_virus_total_client_a51999e30e8a7ad94669592a169d4e039}\index{analyzers.VirusTotalClient@{analyzers.VirusTotalClient}!check\_url@{check\_url}}
+\index{check\_url@{check\_url}!analyzers.VirusTotalClient@{analyzers.VirusTotalClient}}
+\doxysubsubsection{\texorpdfstring{check\_url()}{check\_url()}}
+{\footnotesize\ttfamily \label{classanalyzers_1_1_virus_total_client_a51999e30e8a7ad94669592a169d4e039} 
+ dict analyzers.\+Virus\+Total\+Client.\+check\+\_\+url (\begin{DoxyParamCaption}\item[{}]{self}{, }\item[{str}]{url}{}\end{DoxyParamCaption})}
+
+\begin{DoxyVerb}Проверяет URL через VirusTotal API.
+
+Args:
+    url (str): URL для проверки
+
+Returns:
+    dict: Результат проверки с ключами:
+        - malicious (int): Число детектов как вредоносный
+        - suspicious (int): Число подозрительных детектов  
+        - harmless (int): Число безопасных детектов
+        - error (str): Сообщение об ошибке (при наличии)
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+analyzers.\+py\end{DoxyCompactItemize}
