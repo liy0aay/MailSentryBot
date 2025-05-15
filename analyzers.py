@@ -3,6 +3,7 @@
 
 Классы:
     - VirusTotalClient: Проверка URL через VirusTotal API
+    - BaseAnalyzer: Базовый интерфейс для анализаторов сообщений
     - PhishingAnalyzer: Анализ текста и ссылок на фишинг
 
 Требования:
