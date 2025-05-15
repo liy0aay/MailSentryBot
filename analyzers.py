@@ -89,6 +89,18 @@ class VirusTotalClient:
             return {'error': f"Ошибка сети: {e}"}
         except Exception as e:
             return {'error': f"Неизвестная ошибка: {e}"}
+        
+    def expand_url(self, url: str) -> str:
+        """Расширяет короткие или редиректящие URL."""
+        full_url = url if url.startswith(('http://', 'https://', 'ftp://')) \
+            else f'http://{url}'
+        try:
+            response = requests.get(full_url, allow_redirects=True, timeout=7,
+                                    headers={'User-Agent': 'Mozilla/5.0'})
+            return response.url
+        except Exception:
+            return full_url  # если не удалось, вернём как есть
+
 
 
 class BaseAnalyzer:
@@ -173,37 +185,45 @@ class PhishingAnalyzer(BaseAnalyzer):
             r'(?:\/[^\s]*)?',
             text
         )
-
-    def _check_url_risk(self, url: str) -> str: # метод строго внутри класса
-        """Проверяет риск URL (внутренний метод).
+    
+    def format_url_result(self, url: str, result: dict) -> str:
+        """
+        Форматирует результат проверки URL в виде строки для отчета.
 
         Args:
-            url (str): URL для проверки
+            url (str): Исходный URL, предоставленный пользователем.
+            result (dict): Результат проверки URL от VirusTotal (может содержать поля 'error', 'status', 'malicious', 'suspicious').
 
         Returns:
-            str: Форматированная строка с результатом проверки
-        """ 
-        full_url = url if url.startswith(('http://', 'https://', 'ftp://')) \
-            else f'http://{url}'
-        try:
-            response = requests.get(
-                full_url, allow_redirects=True, timeout=7,
-                headers={'User-Agent': 'Mozilla/5.0'}
-            )
-            expanded = response.url
-            result = self.vt_client.check_url(expanded)
+            str: Cтрока с оценкой URL (Опасно, Подозрительно, Безопасно).
+    """
+        if result.get('error'):
+            return f"    - `{url}`: ⚠️ {result['error']}"
+        if result.get('status') == 'queued':
+            return f"    - `{url}`: ⏳ Отправлен на анализ"
+        if result.get('malicious', 0) > 1 or result.get('suspicious', 0) > 1:
+            return f"    - `{url}`: 🔴 Опасно"
+        if result.get('malicious', 0) > 0 or result.get('suspicious', 0) > 0:
+            return f"    - `{url}`: 🟡 Подозрительно"
+        return f"    - `{url}`: ✅ Безопасно"
 
-            if result.get('error'):
-                return f"    - `{url}`: ⚠️ {result['error']}"
-            if result.get('status') == 'queued':
-                return f"    - `{url}`: ⏳ Отправлен на анализ"
-            if result.get('malicious', 0) > 1 or result.get('suspicious', 0) > 1:
-                return f"    - `{url}`: 🔴 Опасно"
-            if result.get('malicious', 0) > 0 or result.get('suspicious', 0) > 0:
-                return f"    - `{url}`: 🟡 Подозрительно"
-            return f"    - `{url}`: ✅ Безопасно"
+    def _check_url_risk(self, url: str) -> str:
+        """
+        Проверяет степень риска для URL, включая его расширение и анализ через VirusTotal.
+
+        Args:
+            url (str): URL, извлечённый из текста сообщения.
+
+        Returns:
+            str: Отформатированная строка с результатом анализа (например: "🔴 Опасно", "✅ Безопасно" и т. д.).
+    """
+        try:
+            expanded_url = self.vt_client.expand_url(url)
+            result = self.vt_client.check_url(expanded_url)
+            return self.format_url_result(url, result)
         except Exception as e:
             return f"    - `{url}`: ⚠️ Ошибка ({type(e).__name__})"
+
 
     def analyze_message(self, text: str) -> list:
         """Анализирует сообщение на фишинг.
