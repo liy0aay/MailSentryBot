@@ -57,9 +57,11 @@ def load_nlp_model():
         Exception: При ошибках загрузки модели или токенизатора
     """   
     try:
-        model_name = "mrm8488/bert-tiny-finetuned-sms-spam-detection"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        # model_name = "mrm8488/bert-tiny-finetuned-sms-spam-detection"
+        # tokenizer = AutoTokenizer.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained("ealvaradob/bert-finetuned-phishing")
+        model = AutoModelForSequenceClassification.from_pretrained("ealvaradob/bert-finetuned-phishing")
+        # model = AutoModelForSequenceClassification.from_pretrained(model_name)
         nlp = pipeline("text-classification", model=model, tokenizer=tokenizer)
         return nlp, tokenizer
     except Exception as e:
@@ -130,10 +132,10 @@ def send_welcome(message):
         - В случае ошибки отправляет текстовое описание
     """ 
     try:
-        with open("CyberSentry.png", "rb") as photo_file:
+        with open("CyberSentry.png", "rb") as picture:
             bot.send_photo(
                 chat_id=message.chat.id,
-                photo=photo_file,
+                photo=picture,
                 caption=get_help_text(),
                 reply_markup=create_main_keyboard()
             )
