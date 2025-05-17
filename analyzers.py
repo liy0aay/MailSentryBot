@@ -13,7 +13,28 @@
 import re
 import base64
 import requests
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification,  AutoModelForSeq2SeqLM
+from transformers import MarianMTModel, MarianTokenizer
+
+
+model_name = 'Helsinki-NLP/opus-mt-ru-en'
+tokenizer = MarianTokenizer.from_pretrained(model_name)
+model = MarianMTModel.from_pretrained(model_name)
+
+def translate_ru_to_en(text):
+    # разбиваем текст на предложенияим
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+
+    # переводим каждое предложение по отдельности и склеиваем обратно
+    translations = []
+    for sentence in sentences:
+        if sentence:
+            batch = tokenizer([sentence], return_tensors="pt", truncation=True, padding=True)
+            gen = model.generate(**batch)
+            translated = tokenizer.batch_decode(gen, skip_special_tokens=True)
+            translations.append(translated[0])
+
+    return " ".join(translations)
 
 class VirusTotalClient:
     """Клиент для работы с VirusTotal API.
@@ -142,6 +163,15 @@ class PhishingAnalyzer(BaseAnalyzer):
         self.nlp = nlp_pipeline
         self.tokenizer = tokenizer
 
+        """Анализирует текст на признаки фишинга.
+
+        Args:
+            text (str): Текст для анализа
+
+        Returns:
+            dict: Результат анализа с меткой и уверенностью
+        """               
+
     def analyze_text(self, text: str) -> dict:
         """Анализирует текст на признаки фишинга.
 
@@ -151,19 +181,25 @@ class PhishingAnalyzer(BaseAnalyzer):
         Returns:
             dict: Результат анализа с меткой и уверенностью
         """               
-        if not self.nlp or not self.tokenizer:
+        if not self.nlp:
             return {'error': 'Модель не загружена'}
+        
+        # Если в тексте есть кириллица, перевести его на английский
+        if re.search(r'[а-яА-Я]', text):
+            try:
+                print("подаем:", text)
+                text = translate_ru_to_en(text)
+                print(text) #test
+            except Exception as e:
+                return {'error': f"Ошибка перевода: {e}"}
+
 
         try:
-            inputs = self.tokenizer(
-                text, return_tensors="pt", truncation=True, max_length=512
-            )
-            truncated = self.tokenizer.decode(
-                inputs["input_ids"][0], skip_special_tokens=True
-            )
-            result = self.nlp(truncated)[0]
+            
+            result = self.nlp(text)[0]
+            print(result)
             return {
-                'label': 'phishing' if result['label'] == 'LABEL_1' else 'safe',
+                'label': 'phishing' if result['label'] == 'phishing' else 'safe',
                 'score': result['score'],
             }
         except Exception as e:
