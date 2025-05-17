@@ -24,18 +24,14 @@ import os
 import re
 import base64
 import requests
-
 from typing import Dict, List
-
 from dotenv import load_dotenv
 import telebot
 from telebot import types
-
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from safe_test import init_safety_test_handlers
 from analyzers import VirusTotalClient, PhishingAnalyzer, BaseAnalyzer
-
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification,  AutoModelForSeq2SeqLM
 
 # загрузка переменных окружения
 load_dotenv()
@@ -57,9 +53,8 @@ def load_nlp_model():
         Exception: При ошибках загрузки модели или токенизатора
     """   
     try:
-        model_name = "mrm8488/bert-tiny-finetuned-sms-spam-detection"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained("ealvaradob/bert-finetuned-phishing")
+        model = AutoModelForSequenceClassification.from_pretrained("ealvaradob/bert-finetuned-phishing")
         nlp = pipeline("text-classification", model=model, tokenizer=tokenizer)
         return nlp, tokenizer
     except Exception as e:
@@ -71,6 +66,7 @@ nlp, tokenizer = load_nlp_model()
 vt_client = VirusTotalClient(VIRUSTOTAL_API_KEY)
 analyzer = PhishingAnalyzer(vt_client, nlp, tokenizer)
 bot = telebot.TeleBot(API_TOKEN)
+
 
 
 def perform_analysis(message: types.Message, analyzer: BaseAnalyzer):
