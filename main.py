@@ -165,7 +165,7 @@ def check_handler(message):
         result = analyzer.analyze_message(text_to_check)
         bot.reply_to(message, "\n".join(result), parse_mode="Markdown")
     except IndexError:
-        bot.reply_to(
+        bot.reply_to(----
             message,
             "Пожалуйста, укажите текст для проверки после команды /check"
         )

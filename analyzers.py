@@ -17,11 +17,15 @@ from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassifica
 from transformers import MarianMTModel, MarianTokenizer
 
 
-model_name = 'Helsinki-NLP/opus-mt-ru-en'
-tokenizer = MarianTokenizer.from_pretrained(model_name)
-model = MarianMTModel.from_pretrained(model_name)
+
 
 def translate_ru_to_en(text):
+
+    model_name = 'Helsinki-NLP/opus-mt-ru-en'
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name)
+
+
     # разбиваем текст на предложенияим
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
 
