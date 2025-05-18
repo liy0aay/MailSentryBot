@@ -20,7 +20,24 @@ from transformers import MarianMTModel, MarianTokenizer
 
 
 def translate_ru_to_en(text):
+    """Переводит текст с русского на английский язык с использованием модели Helsinki-NLP/opus-mt-ru-en.
 
+    Использует предобученную модель машинного перевода MarianMT от Hugging Face.
+    Текст автоматически разбивается на предложения для улучшения качества перевода.
+
+    Args:
+        text (str): Текст на русском языке для перевода. Может содержать несколько предложений.
+
+    Returns:
+        str: Текст, переведенный на английский язык. Сохраняет пунктуацию исходного текста.
+
+    Raises:
+        ValueError: Если входной текст пустой или содержит только пробелы
+        RuntimeError: При проблемах с загрузкой модели или токенизатора
+
+    Note:
+        - Первый вызов функции может занять время на загрузку модели (300-500MB)
+    """
     model_name = 'Helsinki-NLP/opus-mt-ru-en'
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = MarianMTModel.from_pretrained(model_name)
@@ -116,7 +133,23 @@ class VirusTotalClient:
             return {'error': f"Неизвестная ошибка: {e}"}
         
     def expand_url(self, url: str) -> str:
-        """Расширяет короткие или редиректящие URL."""
+        """Раскрывает сокращённые URL, возвращая конечный адрес после всех редиректов.
+
+        Метод выполняет HTTP-запрос по указанному URL и отслеживает цепочку перенаправлений,
+        возвращая итоговый URL.
+
+        Args:
+            url (str): URL для раскрытия. 
+
+        Returns:
+            str: Конечный URL после всех перенаправлений или исходный URL в случае:
+                - Ошибки запроса
+                - Таймаута соединения
+                - Некорректного URL
+
+        Raises:
+            ValueError: Если передан пустой URL или строка из пробелов
+        """
         full_url = url if url.startswith(('http://', 'https://', 'ftp://')) \
             else f'http://{url}'
         try:
